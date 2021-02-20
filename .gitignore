@@ -1,0 +1,14 @@
+
+#User-specific files
+
+*.suo
+*.user
+iTelluro.Busness.WebApi.xml
+applicationhost.config
+
+# Build results
+[Dd]ebug/
+[Bb]in/
+[Oo]bj/
+/code/Infoearth.Application/Infoearth.Application.Web/gdal
+/code/Infoearth.Application/Infoearth.Application.Web/Resource/MonitorPointProfile
