@@ -1,10 +1,12 @@
-﻿using PlainElastic.Net;
+﻿using Newtonsoft.Json;
+using PlainElastic.Net;
 using PlainElastic.Net.Mappings;
 using PlainElastic.Net.Queries;
 using PlainElastic.Net.Serialization;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -16,8 +18,11 @@ namespace Infoearth.BotEnvironment.Sealions
         private ElasticConnection Client;
         private ElasticSearchHelper()
         {
-            string url = System.Configuration.ConfigurationManager.AppSettings["ElasticSearchConnection"];        
-            Client = new ElasticConnection("172.102.0.7",9200);
+            string url = System.Configuration.ConfigurationManager.AppSettings["ElasticSearchConnection"];
+            if (string.IsNullOrEmpty(url))
+                throw new InvalidOperationException("ES连接配置错误");
+            string[] urls = url.Split(' ');
+            Client = new ElasticConnection(urls[0], urls.Length > 1 ? int.Parse(urls[1]) : 9200);
         }
         /// <summary>
         /// 数据索引
@@ -27,22 +32,40 @@ namespace Infoearth.BotEnvironment.Sealions
         /// <param name="id">索引文档id，不能重复,如果重复则覆盖原先的</param>
         /// <param name="jsonDocument">要索引的文档,json格式</param>
         /// <returns></returns>
-        public IndexResult Index(string indexName, string indexType, string id, string jsonDocument)
+        public IndexResult Index<T>(string indexName, string indexType, string id, T jsonDocument) where T : BaseHighlight
         {
 
             var serializer = new JsonNetSerializer();
             string cmd = new IndexCommand(indexName, indexType, id);
-            OperationResult result = Client.Put(cmd, jsonDocument);
+
+            List<string> lstIgnoreColumns = new List<string>();
+            PropertyInfo[] propertys = typeof(T).GetProperties();
+            for (int j = 0; j < propertys.Length; j++)
+            {
+                var exportAttr = propertys[j].GetCustomAttributes<ColumnAttribute>();
+                if (exportAttr.Any(t => t.Ignore))
+                {
+                    lstIgnoreColumns.Add(propertys[j].Name);
+                }
+            }
+            string document = Newtonsoft.Json.JsonConvert.SerializeObject(jsonDocument, Newtonsoft.Json.Formatting.Indented, new Newtonsoft.Json.JsonSerializerSettings()
+            {
+                ReferenceLoopHandling = ReferenceLoopHandling.Ignore,
+                ContractResolver = new ExcludePropertiesContractResolver(lstIgnoreColumns)
+            });
+
+            OperationResult result = Client.Post(cmd, document);
 
             var indexResult = serializer.ToIndexResult(result.Result);
             return indexResult;
         }
-        public IndexResult Index(string indexName, string indexType, string id, object document)
-        {
-            var serializer = new JsonNetSerializer();
-            var jsonDocument = serializer.Serialize(document);
-            return Index(indexName, indexType, id, jsonDocument);
-        }
+
+        //public IndexResult Index(string indexName, string indexType, string id, object document)
+        //{
+        //    var serializer = new JsonNetSerializer();
+        //    var jsonDocument = serializer.Serialize(document);
+        //    return Index(indexName, indexType, id, jsonDocument);
+        //}
 
         //全文检索，单个字段或者多字段 或关系
         //字段intro 包含词组key中的任意一个单词
@@ -92,7 +115,10 @@ namespace Infoearth.BotEnvironment.Sealions
             //获取高亮值
             for (int i = 0; i < personList.Length; i++)
             {
-                personList[i].highlight = string.Join("", list.hits.hits[i].highlight.Select(t=>t.Value.FirstOrDefault()));
+                if (list.hits.hits[i].highlight != null)
+                    personList[i].highlight = string.Join("", list.hits.hits[i].highlight.Select(t => t.Value.FirstOrDefault()));
+                personList[i]._id = list.hits.hits[i]._id;
+                personList[i]._score = list.hits.hits[i]._score;
             }
            
             //Select(c => new Model()
@@ -107,6 +133,22 @@ namespace Infoearth.BotEnvironment.Sealions
             //});
             datalist.list.AddRange(personList);
             return datalist;
+        }
+
+        /// <summary>
+        /// 删除某条数据
+        /// </summary>
+        /// <param name="indexName"></param>
+        /// <param name="indexType"></param>
+        /// <param name="id"></param>
+        /// <returns></returns>
+        public DeleteResult Delete(string indexName,string indexType,string id)
+        {
+            var serializer = new JsonNetSerializer();
+            string cmd = new DeleteCommand(indexName, indexType, id);
+            OperationResult operationResult = Client.Delete(cmd);
+            var indexResult = serializer.ToDeleteResult(operationResult.Result);
+            return indexResult;
         }
 
         //全文检索，多字段 并关系

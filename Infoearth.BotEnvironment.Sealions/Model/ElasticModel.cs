@@ -47,7 +47,12 @@ namespace Infoearth.BotEnvironment.Sealions
 
     public class BaseHighlight
     {
-        public string highlight;
+        [Column(Ignore = true)]
+        public string highlight { get; set; }
+        [Column(Ignore = true)]
+        public string _id { get; set; }
+        [Column(Ignore = true)]
+        public double _score { get; set; }
     }
 
     public class Model
