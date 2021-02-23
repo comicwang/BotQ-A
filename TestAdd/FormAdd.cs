@@ -15,7 +15,7 @@ namespace TestAdd
 {
     public partial class FormAdd : Form
     {
-        ElasticSearchHelper esHelper = ElasticSearchHelper.Intance;
+        ElasticSearchContext esHelper = ElasticSearchContext.Intance;
 
         monitor _monitor = null;
 

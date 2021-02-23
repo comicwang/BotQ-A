@@ -48,9 +48,9 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Attribute\IgnoreAttribute.cs" />
+    <Compile Include="Attribute\ColumnAttribute.cs" />
     <Compile Include="Model\ExcludePropertiesContractResolver.cs" />
-    <Compile Include="ElasticSearchHelper.cs" />
+    <Compile Include="ElasticSearchContext.cs" />
     <Compile Include="Model\ElasticModel.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

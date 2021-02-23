@@ -15,7 +15,7 @@ namespace TestAdd
 {
     public partial class FormMain : Form
     {
-        ElasticSearchHelper esHelper = ElasticSearchHelper.Intance;
+        ElasticSearchContext esHelper = ElasticSearchContext.Intance;
         public FormMain()
         {
             InitializeComponent();
@@ -51,7 +51,7 @@ namespace TestAdd
 
         private void Search(string keyword)
         {
-            ElasticModel<monitor> result = esHelper.Search<monitor>("test", "monitor", keyword, "answer", 0, 2000);
+            ElasticModel<monitor> result = esHelper.Search<monitor>("test", "monitor", keyword, "answer");
 
             dataGridView1.Rows.Clear();
             if (result != null && result.list != null && result.list.Count > 0)
