@@ -19,7 +19,7 @@ namespace Test
             Console.WriteLine($"您好，我是您的智能助手{botName}，请问有什么能够帮助你？");
             Console.WriteLine("您可以尝试提问：");
             Console.ForegroundColor = ConsoleColor.Yellow;
-            Console.WriteLine("怎么新增监测点信息，怎么挂载设备到监测点等问题");
+            Console.WriteLine("怎么新增监测点信息，怎么挂载设备到监测点");
             Console.ForegroundColor = ConsoleColor.White;
             Console.Write(prefix);
             while (true)

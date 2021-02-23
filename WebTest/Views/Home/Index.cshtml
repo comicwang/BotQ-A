@@ -1,0 +1,117 @@
+﻿@{
+    ViewBag.Title = "Home Page";
+}
+<script src="~/Scripts/jquery-3.4.1.min.js"></script>
+<style>
+    .content-left {
+        margin-left: 10px;
+        /*max-width:300px;*/
+        background-color: white;
+        padding: 5px;
+        font-family: 'Microsoft YaHei';
+        font-size: medium;
+        display: inline-block;
+        border-radius: 5px;
+        line-height: 35px;
+        margin-right: 10px;
+        margin-bottom: 25px;
+        max-width: 600px;
+    }
+    .chatLeft{
+        display:block;
+    }
+    .chatLeft img {
+        width: 40px;
+        height: 40px;
+    }
+
+    .chatRight img {
+        width: 40px;
+        height: 40px;
+        float: right
+    }
+
+    .content-right {
+        background-color: lawngreen;
+        padding: 5px;
+        font-family: 'Microsoft YaHei';
+        font-size: medium;
+        display: inline-block;
+        border-radius: 5px;
+        line-height: 35px;
+        margin-right: 10px;
+        margin-bottom: 25px;
+        max-width: 600px;
+    }
+
+    .chatRight {
+        float: right;
+    }
+
+    .chatContent {
+        height: 400px;
+        
+    }
+
+    .chatSender {
+        margin-bottom: 40px;
+    }
+</style>
+<h1>监测预警平台智能Q&A助手</h1>
+<div class="jumbotron" style="margin-bottom:0px;overflow-y:auto">
+    <div class="chatContent">
+    </div>
+</div>
+<div class="chatSender">
+    <textarea id="txt" style="min-width:1140px;height:100px;background-color:white"></textarea>
+    <input type="button" id="send" value="发送" style="float:right;width:50px;" />
+</div>
+
+<script type="text/javascript">
+    $(function () {
+        $.ajax({
+            url: "/Home/GetFirstword", async: true, success: function (data) {
+                AppendLeft(data);
+            }
+        });
+
+        $('#send').click(function () {
+            var key = $('#txt').val();
+            if (key == "" || key.trim() == "")
+                alert("请输入要提的问题");
+            else {
+                AppentRight(key);
+                $('#txt').val('');
+                $.ajax({
+                    url: "/Home/Answer?key=" + key,
+                    async: true,
+                    success: function (data) {
+                        AppendLeft(data);
+                    }
+                });
+            }
+        });
+    });
+
+    function AppendLeft(txt) {
+        var html = '<div class="chatLeft">';
+        html += '<img src = "/Img/bot.jpeg" />';
+        html += ' <div class="content-left">';
+        html += ' <span>' + txt + '</span>';
+        html += '  </div>';
+        html += '</div >';
+        $('.chatContent').append(html);
+    }
+
+    function AppentRight(txt) {
+        var right = '<div style="width:1041px;height:50px"><div class="chatRight">';
+        right += '  <img src="/Img/default.jpeg" />';
+        right += '<div class="content-right">';
+        right += '   <span>' + txt + '</span>';
+        right += ' </div>';
+        right += ' </div>';
+        right += ' </div>';
+        $('.chatContent').append(right);
+    }
+</script>
+
