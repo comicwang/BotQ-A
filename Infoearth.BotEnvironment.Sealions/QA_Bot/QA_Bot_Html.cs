@@ -77,12 +77,13 @@ namespace Infoearth.BotEnvironment.Sealions
                     if (suceess == false)
                     {
                         //4.对所有属性进行单词匹配
-                        result = elasticSearchHelper.Search<T>(_index, _indexType, key, null, PlainElastic.Net.Operator.OR);
-                        suceess = DealQuestion(result,out answerWord);
-                        if (suceess == false)
-                        {
-                            answerWord = $"抱歉，您的问题{_botName}处理不了，请尝试更换查询问题或者联系管理员【{_contact}】";
-                        }
+                        //result = elasticSearchHelper.Search<T>(_index, _indexType, key, null, PlainElastic.Net.Operator.OR);
+                        //suceess = DealQuestion(result,out answerWord);
+                        //if (suceess == false)
+                        //{
+                        //    answerWord = $"抱歉，您的问题{_botName}处理不了，请尝试更换查询问题或者联系管理员【{_contact}】";
+                        //}
+                        answerWord = $"抱歉，您的问题{_botName}处理不了，请尝试更换查询问题或者联系管理员【{_contact}】";
                     }
                 }
             }
@@ -111,7 +112,7 @@ namespace Infoearth.BotEnvironment.Sealions
                 answerWord = $"{_botName}为您找到多个问题，请问您想问的是哪个问题？<br/>";
                 foreach (var item in result.list)
                 {
-                    answerWord += $"<a onclick='GetDetail(this)'>{item.highlight}</a><br/>";
+                    answerWord += $"<a onclick='GetDetail(this)'>{item.highlight??propKey.GetValue(item)}</a><br/>";
                 }
             }
             return true;

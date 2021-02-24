@@ -111,6 +111,10 @@
         html += '  </div>';
         html += '</div >';
         $('.chatContent').append(html);
+
+        var div = document.getElementsByClassName('jumbotron');
+        div.scrollTop = div.scrollHeight;
+      
     }
 
     function AppentRight(txt) {
@@ -122,6 +126,8 @@
         right += ' </div>';
         right += ' </div>';
         $('.chatContent').append(right);
+        var div = document.getElementsByClassName('jumbotron');
+        div.scrollTop = div.scrollHeight;    
     }
 
     function GetDetail(ctx) {
