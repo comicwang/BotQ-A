@@ -10,7 +10,7 @@ namespace WebTest.Controllers
 {
     public class HomeController : Controller
     {
-        IQA_Bot elasticSearchContext = new QA_Bot_Html<monitor>();
+        IQA_Bot elasticSearchContext = new QA_Bot_Html<MonitorQA>();
 
         public ActionResult Index()
         {
@@ -39,6 +39,11 @@ namespace WebTest.Controllers
         public string Answer(string key)
         {
             return elasticSearchContext.AnswerQuestion(key);
+        }
+
+        public string GetDetail(string keyword)
+        {
+            return elasticSearchContext.GetDetail(keyword);
         }
     }
 }

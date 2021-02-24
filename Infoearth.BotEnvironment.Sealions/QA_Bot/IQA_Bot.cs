@@ -22,5 +22,7 @@ namespace Infoearth.BotEnvironment.Sealions.QA_Bot
         /// <param name="key"></param>
         /// <returns></returns>
         string AnswerQuestion(string key);
+
+        string GetDetail(string key);
     }
 }

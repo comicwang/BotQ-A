@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Configuration;
 using System.Data;
 using System.Drawing;
 using System.Linq;
@@ -16,9 +17,16 @@ namespace TestAdd
     public partial class FormMain : Form
     {
         ElasticSearchContext esHelper = ElasticSearchContext.Intance;
+        private string _index = string.Empty;
+        private string _indexType = string.Empty;
         public FormMain()
         {
             InitializeComponent();
+            string[] strs = ConfigurationManager.AppSettings["ElasticSearchConnection"].Split(' ');
+            if (strs.Length < 4)
+                throw new InvalidOperationException("ES配置错误");
+            _index = strs[2];
+            _indexType = strs[3];
         }
 
         private void dataGridView1_CellContentClick(object sender, DataGridViewCellEventArgs e)
@@ -43,7 +51,7 @@ namespace TestAdd
             else if(e.ColumnIndex==2)
             {
                string _id = dataGridView1[0, e.RowIndex].Value?.ToString();
-                esHelper.Delete("test", "monitor", _id);
+                esHelper.Delete(_index, _indexType, _id);
                 MessageBox.Show("删除成功!");
                 Search(string.Empty);
             }
@@ -51,7 +59,7 @@ namespace TestAdd
 
         private void Search(string keyword)
         {
-            ElasticModel<monitor> result = esHelper.Search<monitor>("test", "monitor", keyword, "answer");
+            ElasticModel<monitor> result = esHelper.Search<monitor>(_index, _indexType, keyword, "answer");
 
             dataGridView1.Rows.Clear();
             if (result != null && result.list != null && result.list.Count > 0)

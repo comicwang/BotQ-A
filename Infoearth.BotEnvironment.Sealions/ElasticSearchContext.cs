@@ -60,13 +60,6 @@ namespace Infoearth.BotEnvironment.Sealions
             return indexResult;
         }
 
-        //public IndexResult Index(string indexName, string indexType, string id, object document)
-        //{
-        //    var serializer = new JsonNetSerializer();
-        //    var jsonDocument = serializer.Serialize(document);
-        //    return Index(indexName, indexType, id, jsonDocument);
-        //}
-
         //全文检索，单个字段或者多字段 或关系
         //字段intro 包含词组key中的任意一个单词
         /// <summary>
@@ -79,48 +72,38 @@ namespace Infoearth.BotEnvironment.Sealions
         /// <param name="intro">搜索属性名称（默认不填为所有）</param>
         /// <param name="opera">分词匹配模式（默认不填为所有词匹配）</param>
         /// <returns></returns>
-        public ElasticModel<T> Search<T>(string indexName, string indexType, string key, string intro = null, Operator opera = Operator.AND) where T : BaseHighlight
+        public ElasticModel<T> Search<T>(string indexName, string indexType, string key, string intro = null, Operator opera = Operator.AND, PageData pageData = null) where T : BaseHighlight
         {
             string cmd = new SearchCommand(indexName, indexType);
-            QueryString<T> queryString = new QueryString<T>();
 
-            QueryBuilder<T> querybuild = new QueryBuilder<T>()
-                //1 查询
-                .Query(b =>
-                            b.Bool(m =>
-                                //并且关系
-                                m.Must(t =>
-
-                                   //分词的最小单位或关系查询
-                                   t.QueryString(t1 => t1.Query(key).DefaultOperator(opera))
-                                     //.QueryString(t1 => t1.DefaultField("name").Query(key))
-                                     // t .Terms(t2=>t2.Field("intro").Values("研究","方鸿渐"))
-                                     //范围查询
-                                     // .Range(r =>  r.Field("age").From("100").To("200") )  
-                                     )
-                                  )
-                                );
-            if (!string.IsNullOrEmpty(intro))
+            QueryString<T> queryString = new QueryString<T>();            
+            if (!string.IsNullOrEmpty(key))
             {
-                querybuild = new QueryBuilder<T>()
-                //1 查询
-                .Query(b =>
-                            b.Bool(m =>
-                                //并且关系
-                                m.Must(t =>
-
-                                   //分词的最小单位或关系查询
-                                   t.QueryString(t1 => t1.DefaultField(intro).Query(key).DefaultOperator(opera))
-                                     //.QueryString(t1 => t1.DefaultField("name").Query(key))
-                                     // t .Terms(t2=>t2.Field("intro").Values("研究","方鸿渐"))
-                                     //范围查询
-                                     // .Range(r =>  r.Field("age").From("100").To("200") )  
-                                     )
-                                  )
-                                );
+                queryString = queryString.Query(key);
+                if (!string.IsNullOrEmpty(intro))
+                {
+                    queryString = queryString.DefaultField(intro);
+                }
             }
-            //排序
-            // .Sort(c => c.Field("age", SortDirection.desc))
+            queryString = queryString.DefaultOperator(opera);
+            QueryBuilder<T> querybuild = new QueryBuilder<T>()
+            //1 查询
+            .Query(b =>
+                        b.Bool(m =>
+                            //并且关系
+                            m.Must(t =>
+
+                              //分词的最小单位或关系查询
+                              t.QueryString(t1 => queryString)
+                                 //.QueryString(t1 => t1.DefaultField("name").Query(key))
+                                 // t .Terms(t2=>t2.Field("intro").Values("研究","方鸿渐"))
+                                 //范围查询
+                                 // .Range(r =>  r.Field("age").From("100").To("200") )  
+                                 )
+                              )
+                            );
+            if (pageData != null)
+                querybuild = querybuild.From(pageData.PageIndex).Size(pageData.PageSize);
             //添加高亮
             string query = querybuild.Highlight(h => h
                     .PreTags("<b>")
@@ -136,7 +119,7 @@ namespace Infoearth.BotEnvironment.Sealions
             var serializer = new JsonNetSerializer();
             var list = serializer.ToSearchResult<T>(result);
             ElasticModel<T> datalist = new ElasticModel<T>();
-            datalist.hits = list.hits.total.value;
+            datalist.hits = list.hits.total;
             datalist.took = list.took;
             var personList = list.hits.hits.Select(c => c._source).ToArray();
             //获取高亮值
@@ -227,7 +210,7 @@ namespace Infoearth.BotEnvironment.Sealions
             var serializer = new JsonNetSerializer();
             var list = serializer.ToSearchResult<T>(result);
             ElasticModel<T> datalist = new ElasticModel<T>();
-            datalist.hits = list.hits.total.value;
+            datalist.hits = list.hits.total;
             datalist.took = list.took;
             var personList = list.hits.hits.Select(c=>c._source).ToList();
             //new T()
@@ -312,7 +295,7 @@ namespace Infoearth.BotEnvironment.Sealions
             var serializer = new JsonNetSerializer();
             var list = serializer.ToSearchResult<T>(result);
             ElasticModel<T> datalist = new ElasticModel<T>();
-            datalist.hits = list.hits.total.value;
+            datalist.hits = list.hits.total;
             datalist.took = list.took;
             var personList = list.hits.hits.Select(c => c._source).ToList();
             //Select(c => new Supernova.Webapi.DbHelper.person()

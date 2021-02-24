@@ -56,6 +56,16 @@
     .chatSender {
         margin-bottom: 40px;
     }
+    .content-left img {
+        margin: 10px;
+        max-width: 95%;
+        width:auto;
+        height: auto;
+        display: inline;
+    }
+    .content-left a{
+        cursor:pointer;
+    }
 </style>
 <h1>监测预警平台智能Q&A助手</h1>
 <div class="jumbotron" style="margin-bottom:0px;overflow-y:auto">
@@ -112,6 +122,15 @@
         right += ' </div>';
         right += ' </div>';
         $('.chatContent').append(right);
+    }
+
+    function GetDetail(ctx) {
+        var txt=ctx.innerText;
+        $.ajax({
+            url: "/Home/GetDetail?keyword=" + txt, async: true, success: function (data) {
+                AppendLeft(data);
+            }
+        });
     }
 </script>
 

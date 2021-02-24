@@ -45,6 +45,12 @@ namespace Infoearth.BotEnvironment.Sealions
         public List<T> list { get; set; }
     }
 
+    public class PageData
+    {
+        public int PageSize { get; set; } = 10;
+        public int PageIndex { get; set; } = 0;
+    }
+
     public class BaseHighlight
     {
         [Column(Ignore = true)]

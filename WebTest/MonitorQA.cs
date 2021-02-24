@@ -16,7 +16,7 @@ namespace WebTest
 	 * 修改时间:
 	 * 版本： @version 1.0
 	 =====================================================*/
-    public class monitor: BaseHighlight
+    public class MonitorQA: BaseHighlight
 	{
 		[Column(Key =true)]
 		public string keyword { get; set; }
