@@ -5,9 +5,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Test
+namespace TestAdd
 {
-    /*===================================================
+	/*===================================================
 	 * 类名称: monitor
 	 * 类描述:
 	 * 创建人: wangchong
@@ -16,12 +16,17 @@ namespace Test
 	 * 修改时间:
 	 * 版本： @version 1.0
 	 =====================================================*/
-    public class monitor: BaseHighlight
+	public class monitorQA : ESBase
 	{
+		[QA(IsKey = true)]
 		public string keyword { get; set; }
 
 		public string model { get; set; }
-
+		[QA(IsAnswer = true)]
 		public string answer { get; set; }
-    }
+		[Index(Name ="monitor")]
+		public string monitor { get; set; }
+		[IndexType]
+		public string QA_Bot { get; set; }
+	}
 }

@@ -65,6 +65,7 @@
     <Compile Include="FormMain.Designer.cs">
       <DependentUpon>FormMain.cs</DependentUpon>
     </Compile>
+    <Compile Include="MonitorQA.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <EmbeddedResource Include="FormAdd.resx">
@@ -101,10 +102,6 @@
     <ProjectReference Include="..\Infoearth.BotEnvironment.Sealions\Infoearth.BotEnvironment.Sealions.csproj">
       <Project>{e638450f-b77b-4447-aa03-3740974ac8c9}</Project>
       <Name>Infoearth.BotEnvironment.Sealions</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\Test\Test.csproj">
-      <Project>{44415eb6-f75c-4271-8719-c74abe428ea4}</Project>
-      <Name>Test</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

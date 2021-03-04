@@ -12,10 +12,10 @@ namespace Infoearth.BotEnvironment.Sealions
     /// <summary>
     /// 问答智能机器人（web版）
     /// </summary>
-    public class QA_Bot_Html<T> : QAContextBase<T>,IQA_Bot where T:ESBase
+    public class QA_Bot_Console<T> : QAContextBase<T>, IQA_Bot where T : ESBase
     {
-        private string _botName = DefaultSetter.RobotName;
-        private string _contact = DefaultSetter.ContactName;
+        private string _botName;
+        private string _contact;
 
         public List<T> TargetResults
         {
@@ -28,12 +28,12 @@ namespace Infoearth.BotEnvironment.Sealions
             string answerWord = string.Empty;
             //1.对标题进行全词匹配
             var result = ESEngine.Search<T>(key, Key);
-            bool suceess = DealQuestion(result,out answerWord);
+            bool suceess = DealQuestion(result, out answerWord);
             if (suceess == false)
             {
                 //2.对标题进行单词匹配
                 result = ESEngine.Search<T>(key, Key, PlainElastic.Net.Operator.OR);
-                suceess = DealQuestion(result,out answerWord);
+                suceess = DealQuestion(result, out answerWord);
                 if (suceess == false)
                 {
                     //3.对所有属性进行全词匹配
@@ -67,15 +67,17 @@ namespace Infoearth.BotEnvironment.Sealions
             {
                 var key = result.list[0].highlight;//propKey.GetValue(result.list[0]);
                 var answer = GetAnswerWord(result.list[0]);
-                answerWord = $"{key}<br/>";
+                answerWord = $"{key}\n";
                 answerWord += answer;
             }
             else
             {
-                answerWord = $"{_botName}为您找到多个问题，请问您想问的是哪个问题？<br/>";
+                answerWord = $"{_botName}为您找到多个问题，请问您想问的是哪个问题？【请回复问题序号】\n";
+                int index = 1;
                 foreach (var item in result.list)
                 {
-                    answerWord += $"<a onclick='GetDetail(this)'>{item.highlight ?? GetKeyWord(item)}</a><br/>";
+                    answerWord += $"{index}{GetKeyWord(item)}\n";
+                    index++;
                 }
             }
             return true;
@@ -83,14 +85,14 @@ namespace Infoearth.BotEnvironment.Sealions
 
         public string GetFirstWord()
         {
-            string result = $"您好，我是您的智能助手{_botName}，请问有什么能够帮助你？<br/>";
+            string result = $"您好，我是您的智能助手{_botName}，请问有什么能够帮助你？\n";
 
-            result += "您可以尝试提问:<br/>";
+            result += "您可以尝试提问:\n";
 
-            var suggestQuestion = ESEngine.Search<T>(string.Empty, Key, PlainElastic.Net.Operator.OR, new PageData() { PageSize = 3 });         
+            var suggestQuestion = ESEngine.Search<T>(string.Empty, Key, PlainElastic.Net.Operator.OR, new PageData() { PageSize = 3 });
             foreach (var item in suggestQuestion.list)
             {
-                result += $"<a onclick='GetDetail(this)'>{GetKeyWord(item)}</a><br/>";
+                result += $" {GetKeyWord(item)}\n";
             }
 
             return result;

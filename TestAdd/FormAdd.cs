@@ -11,29 +11,21 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-using Test;
 
 namespace TestAdd
 {
     public partial class FormAdd : Form
     {
-        ElasticSearchContext esHelper = ElasticSearchContext.Intance;
-        private string _index = string.Empty;
-        private string _indexType = string.Empty;
-        monitor _monitor = null;
+        QA_Bot_Html<monitorQA> _context = new QA_Bot_Html<monitorQA>();
+
+        monitorQA _monitor = new monitorQA();
 
         public FormAdd()
         {
             InitializeComponent();
-            string[] strs = ConfigurationManager.AppSettings["ElasticSearchConnection"].Split(' ');
-            if (strs.Length < 4)
-                throw new InvalidOperationException("ES配置错误");
-            _index = strs[2];
-            _indexType = strs[3];
-            _monitor = new monitor();
         }
 
-        public FormAdd(monitor monitor) : this()
+        public FormAdd(monitorQA monitor) : this()
         {
             bindingSource1.DataSource = monitor;
             _monitor = monitor;
@@ -43,7 +35,7 @@ namespace TestAdd
         {
             if (_monitor != null)
             {
-                IndexResult indexResult = esHelper.Index(_index, _indexType, _monitor._id, _monitor);
+                IndexResult indexResult = _context.ESEngine.Index(_monitor._id, _monitor);
             }
             DialogResult = DialogResult.OK;
         }

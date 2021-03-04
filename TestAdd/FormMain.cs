@@ -10,23 +10,15 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-using Test;
 
 namespace TestAdd
 {
     public partial class FormMain : Form
     {
-        ElasticSearchContext esHelper = ElasticSearchContext.Intance;
-        private string _index = string.Empty;
-        private string _indexType = string.Empty;
+        QA_Bot_Html<monitorQA> _context = new QA_Bot_Html<monitorQA>();
         public FormMain()
         {
-            InitializeComponent();
-            string[] strs = ConfigurationManager.AppSettings["ElasticSearchConnection"].Split(' ');
-            if (strs.Length < 4)
-                throw new InvalidOperationException("ES配置错误");
-            _index = strs[2];
-            _indexType = strs[3];
+            InitializeComponent();         
         }
 
         private void dataGridView1_CellContentClick(object sender, DataGridViewCellEventArgs e)
@@ -34,7 +26,7 @@ namespace TestAdd
             //编辑
             if(e.ColumnIndex==1)
             {
-                FormAdd formAdd = new FormAdd(new monitor()
+                FormAdd formAdd = new FormAdd(new monitorQA()
                 {
                     _id= dataGridView1[0, e.RowIndex].Value?.ToString(),
                     keyword = dataGridView1[5, e.RowIndex].Value?.ToString(),
@@ -51,7 +43,7 @@ namespace TestAdd
             else if(e.ColumnIndex==2)
             {
                string _id = dataGridView1[0, e.RowIndex].Value?.ToString();
-                esHelper.Delete(_index, _indexType, _id);
+                _context.ESEngine.Delete(_id);
                 MessageBox.Show("删除成功!");
                 Search(string.Empty);
             }
@@ -59,7 +51,7 @@ namespace TestAdd
 
         private void Search(string keyword)
         {
-            ElasticModel<monitor> result = esHelper.Search<monitor>(_index, _indexType, keyword, "answer");
+            ElasticModel<monitorQA> result = _context.ESEngine.Search<monitorQA>(keyword);
 
             dataGridView1.Rows.Clear();
             if (result != null && result.list != null && result.list.Count > 0)

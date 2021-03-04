@@ -12,6 +12,13 @@ namespace WebTest.Controllers
     {
         IQA_Bot elasticSearchContext = new QA_Bot_Html<MonitorQA>();
 
+        public HomeController()
+        {
+            elasticSearchContext.SetRobotName(System.Configuration.ConfigurationManager.AppSettings["BotName"]);
+            elasticSearchContext.SetNoAnswerWord(System.Configuration.ConfigurationManager.AppSettings["SystemContact"]);
+        }
+
+
         public ActionResult Index()
         {
             return View();

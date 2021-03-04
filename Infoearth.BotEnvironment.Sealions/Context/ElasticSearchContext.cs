@@ -12,7 +12,7 @@ using System.Threading.Tasks;
 
 namespace Infoearth.BotEnvironment.Sealions
 {
-    public class ElasticSearchContext
+    public sealed class ElasticSearchContext
     {
         public static readonly ElasticSearchContext Intance = new ElasticSearchContext();
         private ElasticConnection Client;
@@ -24,6 +24,29 @@ namespace Infoearth.BotEnvironment.Sealions
             string[] urls = url.Split(' ');
             Client = new ElasticConnection(urls[0], urls.Length > 1 ? int.Parse(urls[1]) : 9200);
         }
+
+        private static string indexName = string.Empty;
+
+        private static string indexType = string.Empty;
+
+        public void SetESParam(string index,string indextype)
+        {
+            indexName = index;
+            indexType = indextype;
+        }
+
+        /// <summary>
+        /// 插入或者更新数据
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="id">索引文档id，不能重复,如果重复则覆盖原先的</param>
+        /// <param name="jsonDocument">要索引的文档,json格式</param>
+        /// <returns></returns>
+        public IndexResult Index<T>(string id,T jsonDocument) where T:ESBase
+        {
+            return Index<T>(indexName, indexType, id, jsonDocument);
+        }
+
         /// <summary>
         /// 数据索引
         /// </summary>       
@@ -32,7 +55,7 @@ namespace Infoearth.BotEnvironment.Sealions
         /// <param name="id">索引文档id，不能重复,如果重复则覆盖原先的</param>
         /// <param name="jsonDocument">要索引的文档,json格式</param>
         /// <returns></returns>
-        public IndexResult Index<T>(string indexName, string indexType, string id, T jsonDocument) where T : BaseHighlight
+        private IndexResult Index<T>(string indexName, string indexType, string id, T jsonDocument) where T : ESBase
         {
 
             var serializer = new JsonNetSerializer();
@@ -42,8 +65,18 @@ namespace Infoearth.BotEnvironment.Sealions
             PropertyInfo[] propertys = typeof(T).GetProperties();
             for (int j = 0; j < propertys.Length; j++)
             {
-                var exportAttr = propertys[j].GetCustomAttributes<ColumnAttribute>();
-                if (exportAttr.Any(t => t.Ignore))
+                var exportAttr = propertys[j].GetCustomAttributes<IgnoreAttribute>();
+                if (exportAttr.Any())
+                {
+                    lstIgnoreColumns.Add(propertys[j].Name);
+                }
+                var indexAttr = propertys[j].GetCustomAttributes<IndexAttribute>();
+                if (indexAttr.Any())
+                {
+                    lstIgnoreColumns.Add(propertys[j].Name);
+                }
+                var indexTypeAttr = propertys[j].GetCustomAttributes<IndexTypeAttribute>();
+                if (indexTypeAttr.Any())
                 {
                     lstIgnoreColumns.Add(propertys[j].Name);
                 }
@@ -65,6 +98,20 @@ namespace Infoearth.BotEnvironment.Sealions
         /// <summary>
         /// 搜索索引信息
         /// </summary>
+        /// <param name="key">搜索关键字</param>
+        /// <param name="intro">搜索属性名称（默认不填为所有）</param>
+        /// <param name="opera">分词匹配模式（默认不填为所有词匹配）</param>
+        /// <returns></returns>
+        public ElasticModel<T> Search<T>(string key, string intro = null, Operator opera = Operator.AND, PageData pageData = null) where T : ESBase
+        {
+            return Search<T>(indexName, indexType, key, intro, opera, pageData);
+        }
+
+        //全文检索，单个字段或者多字段 或关系
+        //字段intro 包含词组key中的任意一个单词
+        /// <summary>
+        /// 搜索索引信息
+        /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="indexName">索引名称</param>
         /// <param name="indexType">索引类型</param>
@@ -72,11 +119,11 @@ namespace Infoearth.BotEnvironment.Sealions
         /// <param name="intro">搜索属性名称（默认不填为所有）</param>
         /// <param name="opera">分词匹配模式（默认不填为所有词匹配）</param>
         /// <returns></returns>
-        public ElasticModel<T> Search<T>(string indexName, string indexType, string key, string intro = null, Operator opera = Operator.AND, PageData pageData = null) where T : BaseHighlight
+        private ElasticModel<T> Search<T>(string indexName, string indexType, string key, string intro = null, Operator opera = Operator.AND, PageData pageData = null) where T : ESBase
         {
             string cmd = new SearchCommand(indexName, indexType);
 
-            QueryString<T> queryString = new QueryString<T>();            
+            QueryString<T> queryString = new QueryString<T>();
             if (!string.IsNullOrEmpty(key))
             {
                 queryString = queryString.Query(key);
@@ -137,11 +184,21 @@ namespace Infoearth.BotEnvironment.Sealions
         /// <summary>
         /// 删除某条数据
         /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
+        public DeleteResult Delete(string id)
+        {
+            return Delete(indexName, indexType, id);
+        }
+
+        /// <summary>
+        /// 删除某条数据
+        /// </summary>
         /// <param name="indexName"></param>
         /// <param name="indexType"></param>
         /// <param name="id"></param>
         /// <returns></returns>
-        public DeleteResult Delete(string indexName,string indexType,string id)
+        private DeleteResult Delete(string indexName, string indexType, string id)
         {
             var serializer = new JsonNetSerializer();
             string cmd = new DeleteCommand(indexName, indexType, id);
@@ -152,7 +209,7 @@ namespace Infoearth.BotEnvironment.Sealions
 
         //全文检索，多字段 并关系
         //字段intro 或者name 包含词组key
-        public ElasticModel<T> SearchFullFileds<T>(string indexName, string indexType, string key, int from, int size) where T: BaseHighlight
+        public ElasticModel<T> SearchFullFileds<T>(string indexName, string indexType, string key, int from, int size) where T: ESBase
         {
             MustQuery<T> mustNameQueryKeys = new MustQuery<T>();
             MustQuery<T> mustIntroQueryKeys = new MustQuery<T>();
@@ -229,7 +286,7 @@ namespace Infoearth.BotEnvironment.Sealions
 
         //全文检索，多字段 并关系
         //搜索age在100到200之间，并且字段intro 或者name 包含词组key
-        public ElasticModel<T> SearchFullFiledss<T>(string indexName, string indexType, string key, int from, int size) where T: BaseHighlight
+        public ElasticModel<T> SearchFullFiledss<T>(string indexName, string indexType, string key, int from, int size) where T: ESBase
         {
             MustQuery<T> mustNameQueryKeys = new MustQuery<T>();
             MustQuery<T> mustIntroQueryKeys = new MustQuery<T>();

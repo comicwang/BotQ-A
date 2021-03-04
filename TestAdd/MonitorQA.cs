@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace WebTest
+namespace TestAdd
 {
 	/*===================================================
 	 * 类名称: monitor
@@ -16,7 +16,7 @@ namespace WebTest
 	 * 修改时间:
 	 * 版本： @version 1.0
 	 =====================================================*/
-	public class MonitorQA : ESBase
+	public class monitorQA : ESBase
 	{
 		[QA(IsKey = true)]
 		public string keyword { get; set; }

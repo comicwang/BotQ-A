@@ -34,7 +34,7 @@ namespace Infoearth.BotEnvironment.Sealions
     /// <summary>
     /// ES返回对象集合
     /// </summary>
-    public class ElasticModel<T> where T: BaseHighlight
+    public class ElasticModel<T> where T: ESBase
     {
         public ElasticModel()
         {
@@ -51,13 +51,13 @@ namespace Infoearth.BotEnvironment.Sealions
         public int PageIndex { get; set; } = 0;
     }
 
-    public class BaseHighlight
+    public class ESBase
     {
-        [Column(Ignore = true)]
+        [Ignore]
         public string highlight { get; set; }
-        [Column(Ignore = true)]
+        [Ignore]
         public string _id { get; set; }
-        [Column(Ignore = true)]
+        [Ignore]
         public double _score { get; set; }
     }
 

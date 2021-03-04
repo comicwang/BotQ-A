@@ -62,7 +62,7 @@
             // 
             // bindingSource1
             // 
-            this.bindingSource1.DataSource = typeof(Test.monitor);
+            this.bindingSource1.DataSource = typeof(monitorQA);
             // 
             // label2
             // 

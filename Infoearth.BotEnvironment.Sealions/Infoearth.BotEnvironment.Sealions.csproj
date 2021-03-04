@@ -48,17 +48,22 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Attribute\ColumnAttribute.cs" />
+    <Compile Include="Attribute\IndexAttribute.cs" />
+    <Compile Include="Attribute\QAAttribute.cs" />
+    <Compile Include="Common\DefaultSetter.cs" />
     <Compile Include="Model\ExcludePropertiesContractResolver.cs" />
-    <Compile Include="ElasticSearchContext.cs" />
+    <Compile Include="Context\ElasticSearchContext.cs" />
     <Compile Include="Model\ElasticModel.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="QA_Bot\IQA_Bot.cs" />
+    <Compile Include="Context\QAContextBase.cs" />
+    <Compile Include="QA_Bot\QA_Bot_Console.cs" />
     <Compile Include="QA_Bot\QA_Bot_Html.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />
     <None Include="packages.config" />
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

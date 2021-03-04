@@ -12,6 +12,20 @@ namespace Infoearth.BotEnvironment.Sealions.QA_Bot
     public interface IQA_Bot
     {
         /// <summary>
+        /// 设置机器人名称
+        /// </summary>
+        /// <param name="name"></param>
+        /// <returns></returns>
+        void SetRobotName(string name);
+
+        /// <summary>
+        /// 设置题库无解的默认回答
+        /// </summary>
+        /// <param name="word"></param>
+        /// <returns></returns>
+        void SetNoAnswerWord(string word);
+
+        /// <summary>
         /// 获取开场白
         /// </summary>
         /// <returns></returns>
