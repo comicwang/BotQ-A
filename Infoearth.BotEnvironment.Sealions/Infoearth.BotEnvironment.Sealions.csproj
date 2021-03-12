@@ -58,6 +58,7 @@
     <Compile Include="QA_Bot\IQA_Bot.cs" />
     <Compile Include="Context\QAContextBase.cs" />
     <Compile Include="QA_Bot\QA_Bot_Console.cs" />
+    <Compile Include="QA_Bot\QA_Reply_Html.cs" />
     <Compile Include="QA_Bot\QA_Bot_Html.cs" />
   </ItemGroup>
   <ItemGroup>

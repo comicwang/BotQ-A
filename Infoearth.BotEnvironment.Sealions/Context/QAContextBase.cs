@@ -7,6 +7,10 @@ using System.Threading.Tasks;
 
 namespace Infoearth.BotEnvironment.Sealions.QA_Bot
 {
+    /// <summary>
+    /// QA上下文
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
     public abstract class QAContextBase<T> where T : ESBase
     {
         private string _key;
@@ -20,6 +24,12 @@ namespace Infoearth.BotEnvironment.Sealions.QA_Bot
         /// 获取QA答案列名称
         /// </summary>
         public string Answer { get => _answer; private set => _answer = value; }
+
+        private string _model;
+        /// <summary>
+        /// 答案所属模块
+        /// </summary>
+        public string AnswerModel { get => _model; private set => _model = value; }
 
         private string _index;
         /// <summary>
@@ -55,6 +65,10 @@ namespace Infoearth.BotEnvironment.Sealions.QA_Bot
                 {
                     Answer = propertys[j].Name;
                 }
+                if (exportAttr.Any(t => t.IsModel))
+                {
+                    AnswerModel = propertys[j].Name;
+                }
                 var indexAttr = propertys[j].GetCustomAttributes<IndexAttribute>();
                 if (indexAttr.Any())
                 {
@@ -64,7 +78,7 @@ namespace Infoearth.BotEnvironment.Sealions.QA_Bot
                         Index = indexName;
                     }
                     Index = propertys[j].Name;
-                }
+                }             
                 var indexTypeAttr = propertys[j].GetCustomAttributes<IndexTypeAttribute>();
                 if (indexTypeAttr.Any())
                 {
@@ -76,10 +90,10 @@ namespace Infoearth.BotEnvironment.Sealions.QA_Bot
                     IndexType = propertys[j].Name;
                 }
             }
-            if (string.IsNullOrEmpty(_key))
-                throw new InvalidOperationException("所创建的继承类未指定QA的标题列");
-            if (string.IsNullOrEmpty(_answer))
-                throw new InvalidOperationException("所创建的继承类未指定QA的答案列");
+            //if (string.IsNullOrEmpty(_key))
+            //    throw new InvalidOperationException("所创建的继承类未指定QA的标题列");
+            //if (string.IsNullOrEmpty(_answer))
+            //    throw new InvalidOperationException("所创建的继承类未指定QA的答案列");
             if (string.IsNullOrEmpty(_index))
                 throw new InvalidOperationException("所创建的继承类未指定ES的索引名称");
             if (string.IsNullOrEmpty(_indexType))
@@ -107,6 +121,17 @@ namespace Infoearth.BotEnvironment.Sealions.QA_Bot
         public string GetAnswerWord(T obj)
         {
             PropertyInfo propKey = typeof(T).GetProperties().FirstOrDefault(s => s.Name == _answer);
+            return propKey.GetValue(obj)?.ToString();
+        }
+
+        /// <summary>
+        /// 获取答案模块值
+        /// </summary>
+        /// <param name="obj"></param>
+        /// <returns></returns>
+        public string GetModelWord(T obj)
+        {
+            PropertyInfo propKey = typeof(T).GetProperties().FirstOrDefault(s => s.Name == _model);
             return propKey.GetValue(obj)?.ToString();
         }
     }

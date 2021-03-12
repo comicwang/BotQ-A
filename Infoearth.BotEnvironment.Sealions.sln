@@ -11,6 +11,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestAdd", "TestAdd\TestAdd.
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebTest", "WebTest\WebTest.csproj", "{00C85703-C7FC-4E50-8515-CDDB02EE2B28}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Demo", "Demo", "{339E2250-2A5C-4DE8-9AA3-E78AF0C9E747}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Infoearth.Framework.QABotRestApi", "Infoearth.Framework.MonitorDataExchange\Infoearth.Framework.QABotRestApi.csproj", "{E28F41BC-59D2-464F-BB98-081BCEEE1A01}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -33,9 +37,18 @@ Global
 		{00C85703-C7FC-4E50-8515-CDDB02EE2B28}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{00C85703-C7FC-4E50-8515-CDDB02EE2B28}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{00C85703-C7FC-4E50-8515-CDDB02EE2B28}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E28F41BC-59D2-464F-BB98-081BCEEE1A01}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E28F41BC-59D2-464F-BB98-081BCEEE1A01}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E28F41BC-59D2-464F-BB98-081BCEEE1A01}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E28F41BC-59D2-464F-BB98-081BCEEE1A01}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{44415EB6-F75C-4271-8719-C74ABE428EA4} = {339E2250-2A5C-4DE8-9AA3-E78AF0C9E747}
+		{B0A84BDE-C28A-4F2E-A06E-AE78926CC306} = {339E2250-2A5C-4DE8-9AA3-E78AF0C9E747}
+		{00C85703-C7FC-4E50-8515-CDDB02EE2B28} = {339E2250-2A5C-4DE8-9AA3-E78AF0C9E747}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {CDE13974-3334-4A00-885C-F46F0458AD48}

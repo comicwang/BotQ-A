@@ -36,6 +36,20 @@ namespace Infoearth.BotEnvironment.Sealions
         }
 
         /// <summary>
+        /// 获取分词信息
+        /// </summary>
+        /// <param name="str"></param>
+        /// <returns></returns>
+        public List<string> GetSplitWord(string str)
+        {
+            string json = Newtonsoft.Json.JsonConvert.SerializeObject(new { text = str, analyzer = "ik_smart" });
+             var result= Client.Post("_analyze", json);
+            var serializer = new JsonNetSerializer();
+            var list = serializer.Deserialize(result, typeof(ik)) as ik;
+            return list.tokens.Select(c => c.token).ToList();
+        }
+
+        /// <summary>
         /// 插入或者更新数据
         /// </summary>
         /// <typeparam name="T"></typeparam>
@@ -59,7 +73,7 @@ namespace Infoearth.BotEnvironment.Sealions
         {
 
             var serializer = new JsonNetSerializer();
-            string cmd = new IndexCommand(indexName, indexType, id);
+            string cmd = new IndexCommand(indexName, indexType, id).Refresh();
 
             List<string> lstIgnoreColumns = new List<string>();
             PropertyInfo[] propertys = typeof(T).GetProperties();
@@ -93,6 +107,90 @@ namespace Infoearth.BotEnvironment.Sealions
             return indexResult;
         }
 
+        public ElasticModel<T> SearchIk<T>(PageData pageData,params QueryContext[] queryContexts) where T : ESBase
+        {
+            //解析分词         
+            BoolQuery<T> query = new BoolQuery<T>();
+            foreach (QueryContext queryContext in queryContexts)
+            {
+                BoolQuery<T> boolQuery = new BoolQuery<T>();
+                var arrKeys = GetSplitWord(queryContext.queryModel.key);
+                if (queryContext.queryModel.queryRelation == QueryRelation.And)
+                {
+                    foreach (var item in arrKeys)
+                    {
+                        MustQuery<T> mustQuery = new MustQuery<T>();
+                        TermQuery<T> termQuery = new TermQuery<T>();
+                        if (!string.IsNullOrEmpty(queryContext.queryModel.field))
+                        {
+                            termQuery.Field(queryContext.queryModel.field);
+                        }
+                        mustQuery = mustQuery.Term(t => termQuery.Value(item)) as MustQuery<T>;
+                        boolQuery = boolQuery.Must(t => mustQuery);
+                    }
+                }
+                else
+                {
+                    foreach (var item in arrKeys)
+                    {
+                        ShouldQuery<T> shouldQuery = new ShouldQuery<T>();
+                        TermQuery<T> termQuery = new TermQuery<T>();
+                        if (!string.IsNullOrEmpty(queryContext.queryModel.field))
+                        {
+                            termQuery.Field(queryContext.queryModel.field);
+                        }
+                        shouldQuery = shouldQuery.Term(t => termQuery.Value(item)) as ShouldQuery<T>;
+                        boolQuery = boolQuery.Should(t => shouldQuery);
+                    }
+                }
+                if(queryContext.queryRelation==QueryRelation.And)
+                {
+                    query = query.Must(t => boolQuery as MustQuery<T>);
+                }
+                else
+                {
+                    query = query.Should(t => boolQuery as ShouldQuery<T>);
+                }
+            }
+
+            string cmd = new SearchCommand(indexName, indexType);
+            QueryBuilder<T> querybuild = new QueryBuilder<T>()
+                .Query(b =>
+                            b.Bool(m => query));
+            //添加高亮
+            querybuild = querybuild.Highlight(h => h
+                    .PreTags("<b>")
+                    .PostTags("</b>")
+                    .Fields(
+                           f => f.FieldName("_all").Order(HighlightOrder.score),
+                           f => f.FieldName("_all")
+                           )
+                 );
+            if (pageData != null)
+                querybuild = querybuild.From((pageData.PageIndex - 1) * pageData.PageSize).Size(pageData.PageSize);
+            string result = Client.Post(cmd, querybuild.Build());
+            var serializer = new JsonNetSerializer();
+            var list = serializer.ToSearchResult<T>(result);
+            ElasticModel<T> datalist = new ElasticModel<T>();
+            datalist.hits = list.hits.total;
+            datalist.took = list.took;
+            if (pageData != null)
+                pageData.Total = list.hits.total;
+            var personList = list.hits.hits.Select(c => c._source).ToArray();
+            //获取高亮值
+            for (int i = 0; i < personList.Length; i++)
+            {
+                if (list.hits.hits[i].highlight != null)
+                    personList[i].highlight = string.Join("", list.hits.hits[i].highlight.Select(t => t.Value.FirstOrDefault()));
+                personList[i]._id = list.hits.hits[i]._id;
+                personList[i]._score = list.hits.hits[i]._score;
+            }
+            datalist.list.AddRange(personList);
+            return datalist;
+
+        }
+
+
         //全文检索，单个字段或者多字段 或关系
         //字段intro 包含词组key中的任意一个单词
         /// <summary>
@@ -101,10 +199,47 @@ namespace Infoearth.BotEnvironment.Sealions
         /// <param name="key">搜索关键字</param>
         /// <param name="intro">搜索属性名称（默认不填为所有）</param>
         /// <param name="opera">分词匹配模式（默认不填为所有词匹配）</param>
+        /// <param name="model">所属模块关键字</param>
+        /// <param name="modelintro">所属模块属性</param>
         /// <returns></returns>
-        public ElasticModel<T> Search<T>(string key, string intro = null, Operator opera = Operator.AND, PageData pageData = null) where T : ESBase
+        public ElasticModel<T> Search<T>(string key, string intro = null, Operator opera = Operator.AND, PageData pageData = null, string model = null, string modelintro = null) where T : ESBase
         {
-            return Search<T>(indexName, indexType, key, intro, opera, pageData);
+            return Search<T>(indexName, indexType, key, intro, opera, pageData, model, modelintro);
+        }
+
+        /// <summary>
+        /// 根据ID查询
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="id"></param>
+        /// <returns></returns>
+        public T SearchById<T>(string id) where T:ESBase
+        {
+            string cmd = new SearchCommand(indexName, indexType);
+
+            QueryString<T> queryString = new QueryString<T>();
+            QueryBuilder<T> querybuild = new QueryBuilder<T>()
+           //1 查询
+           .Query(b => b.Ids(m => m.Values(new List<string>() { id })));
+
+            string result = Client.Post(cmd, querybuild.Build());
+            var serializer = new JsonNetSerializer();
+            var list = serializer.ToSearchResult<T>(result);
+            ElasticModel<T> datalist = new ElasticModel<T>();
+            datalist.hits = list.hits.total;
+            datalist.took = list.took;
+            var personList = list.hits.hits.Select(c => c._source).ToArray();
+            //获取高亮值
+            for (int i = 0; i < personList.Length; i++)
+            {
+                if (list.hits.hits[i].highlight != null)
+                    personList[i].highlight = string.Join("", list.hits.hits[i].highlight.Select(t => t.Value.FirstOrDefault()));
+                personList[i]._id = list.hits.hits[i]._id;
+                personList[i]._score = list.hits.hits[i]._score;
+            }
+          
+            return personList.FirstOrDefault();
+
         }
 
         //全文检索，单个字段或者多字段 或关系
@@ -119,7 +254,7 @@ namespace Infoearth.BotEnvironment.Sealions
         /// <param name="intro">搜索属性名称（默认不填为所有）</param>
         /// <param name="opera">分词匹配模式（默认不填为所有词匹配）</param>
         /// <returns></returns>
-        private ElasticModel<T> Search<T>(string indexName, string indexType, string key, string intro = null, Operator opera = Operator.AND, PageData pageData = null) where T : ESBase
+        private ElasticModel<T> Search<T>(string indexName, string indexType, string key, string intro = null, Operator opera = Operator.AND, PageData pageData = null, string model = null,string modelintro=null) where T : ESBase
         {
             string cmd = new SearchCommand(indexName, indexType);
 
@@ -132,6 +267,14 @@ namespace Infoearth.BotEnvironment.Sealions
                     queryString = queryString.DefaultField(intro);
                 }
             }
+            if (!string.IsNullOrEmpty(model))
+            {
+                queryString = queryString.Query(model);
+                if (!string.IsNullOrEmpty(modelintro))
+                {
+                    queryString = queryString.DefaultField(modelintro);
+                }
+            }
             queryString = queryString.DefaultOperator(opera);
             QueryBuilder<T> querybuild = new QueryBuilder<T>()
             //1 查询
@@ -139,9 +282,8 @@ namespace Infoearth.BotEnvironment.Sealions
                         b.Bool(m =>
                             //并且关系
                             m.Must(t =>
-
                               //分词的最小单位或关系查询
-                              t.QueryString(t1 => queryString)
+                              t.QueryString(t1 =>queryString)
                                  //.QueryString(t1 => t1.DefaultField("name").Query(key))
                                  // t .Terms(t2=>t2.Field("intro").Values("研究","方鸿渐"))
                                  //范围查询
@@ -150,7 +292,7 @@ namespace Infoearth.BotEnvironment.Sealions
                               )
                             );
             if (pageData != null)
-                querybuild = querybuild.From(pageData.PageIndex).Size(pageData.PageSize);
+                querybuild = querybuild.From((pageData.PageIndex-1)*pageData.PageSize).Size(pageData.PageSize);
             //添加高亮
             string query = querybuild.Highlight(h => h
                     .PreTags("<b>")
@@ -167,6 +309,8 @@ namespace Infoearth.BotEnvironment.Sealions
             var list = serializer.ToSearchResult<T>(result);
             ElasticModel<T> datalist = new ElasticModel<T>();
             datalist.hits = list.hits.total;
+            if (pageData != null)
+                pageData.Total = list.hits.total;
             datalist.took = list.took;
             var personList = list.hits.hits.Select(c => c._source).ToArray();
             //获取高亮值
@@ -201,7 +345,8 @@ namespace Infoearth.BotEnvironment.Sealions
         private DeleteResult Delete(string indexName, string indexType, string id)
         {
             var serializer = new JsonNetSerializer();
-            string cmd = new DeleteCommand(indexName, indexType, id);
+            string cmd = new DeleteCommand(indexName, indexType, id).Refresh();
+            
             OperationResult operationResult = Client.Delete(cmd);
             var indexResult = serializer.ToDeleteResult(operationResult.Result);
             return indexResult;

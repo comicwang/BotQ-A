@@ -47,8 +47,18 @@ namespace Infoearth.BotEnvironment.Sealions
 
     public class PageData
     {
+        /// <summary>
+        /// 页数
+        /// </summary>
         public int PageSize { get; set; } = 10;
+        /// <summary>
+        /// 页码
+        /// </summary>
         public int PageIndex { get; set; } = 0;
+        /// <summary>
+        /// 总数
+        /// </summary>
+        public int Total { get; set; }
     }
 
     public class ESBase
@@ -59,6 +69,28 @@ namespace Infoearth.BotEnvironment.Sealions
         public string _id { get; set; }
         [Ignore]
         public double _score { get; set; }
+    }
+
+    public class QueryModel
+    {
+        public string key { get; set; }
+
+        public string field { get; set; }
+
+        public QueryRelation queryRelation { get; set; }
+    }
+
+    public class QueryContext
+    {
+        public QueryModel queryModel { get; set; }
+
+        public QueryRelation queryRelation { get; set; }
+    }
+
+    public enum QueryRelation
+    {
+        And,
+        Or
     }
 
     public class Model

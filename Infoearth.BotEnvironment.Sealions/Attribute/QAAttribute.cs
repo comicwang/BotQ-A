@@ -25,5 +25,9 @@ namespace Infoearth.BotEnvironment.Sealions
         /// 答案
         /// </summary>
         public bool IsAnswer { get; set; }
+        /// <summary>
+        /// 模块
+        /// </summary>
+        public bool IsModel { get; set; }
     }
 }
