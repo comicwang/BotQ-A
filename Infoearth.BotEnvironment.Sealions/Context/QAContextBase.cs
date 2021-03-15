@@ -1,4 +1,6 @@
-﻿using System;
+﻿using PlainElastic.Net;
+using PlainElastic.Net.Serialization;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -44,6 +46,12 @@ namespace Infoearth.BotEnvironment.Sealions.QA_Bot
         /// </summary>
         public string IndexType { get => _indexType; private set => _indexType = value; }
 
+        private string _parentType;
+        /// <summary>
+        /// 获取ES索引类型名称
+        /// </summary>
+        public string ParentType { get => _parentType; private set => _parentType = value; }
+
         private ElasticSearchContext _esEngine = ElasticSearchContext.Intance;
         /// <summary>
         /// 执行器引擎
@@ -53,6 +61,14 @@ namespace Infoearth.BotEnvironment.Sealions.QA_Bot
 
         public QAContextBase()
         {
+            var index= typeof(T).GetCustomAttributes<IndexAttribute>();
+            if(index==null||index.Count()==0)
+                throw new InvalidOperationException("所创建的继承类未指定ES索引特性");
+            IndexAttribute indexAttribute = index.FirstOrDefault();
+            _index = indexAttribute.IndexName;
+            _indexType = indexAttribute.TypeName;
+            _parentType = indexAttribute.ParentName;
+
             PropertyInfo[] propertys = typeof(T).GetProperties();
             for (int j = 0; j < propertys.Length; j++)
             {
@@ -68,27 +84,7 @@ namespace Infoearth.BotEnvironment.Sealions.QA_Bot
                 if (exportAttr.Any(t => t.IsModel))
                 {
                     AnswerModel = propertys[j].Name;
-                }
-                var indexAttr = propertys[j].GetCustomAttributes<IndexAttribute>();
-                if (indexAttr.Any())
-                {
-                    string indexName = indexAttr.FirstOrDefault().Name;
-                    if (!string.IsNullOrEmpty(indexName))
-                    {
-                        Index = indexName;
-                    }
-                    Index = propertys[j].Name;
-                }             
-                var indexTypeAttr = propertys[j].GetCustomAttributes<IndexTypeAttribute>();
-                if (indexTypeAttr.Any())
-                {
-                    string indexTypeName = indexTypeAttr.FirstOrDefault().Name;
-                    if (!string.IsNullOrEmpty(indexTypeName))
-                    {
-                        IndexType = indexTypeName;
-                    }
-                    IndexType = propertys[j].Name;
-                }
+                }              
             }
             //if (string.IsNullOrEmpty(_key))
             //    throw new InvalidOperationException("所创建的继承类未指定QA的标题列");
@@ -98,9 +94,90 @@ namespace Infoearth.BotEnvironment.Sealions.QA_Bot
                 throw new InvalidOperationException("所创建的继承类未指定ES的索引名称");
             if (string.IsNullOrEmpty(_indexType))
                 throw new InvalidOperationException("所创建的继承类未指定ES的索引类型名称");
-
-            _esEngine.SetESParam(_index, _indexType);
         }
+
+        #region 上下文方法封装
+        /// <summary>
+        /// 插入数据文档
+        /// </summary>
+        /// <param name="id"></param>
+        /// <param name="jsonDocument"></param>
+        /// <param name="parent"></param>
+        /// <returns></returns>
+        public IndexResult Insert(T jsonDocument, string parent = null)
+        {
+            return _esEngine.Index<T>(_index, _indexType,jsonDocument, parent);
+        }
+
+
+        /// <summary>
+        /// 根据主键查询
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
+        public T SearchById(string id)
+        {
+            return _esEngine.SearchById<T>(_index, _indexType, id);
+        }
+
+        /// <summary>
+        /// 根据主键集合查询
+        /// </summary>
+        /// <param name="ids"></param>
+        /// <returns></returns>
+        public T[] SearchByIds(List<string> ids)
+        {
+            return _esEngine.SearchByIds<T>(_index, _indexType, ids);
+        }
+
+        /// <summary>
+        /// 分页排序查询
+        /// </summary>
+        /// <param name="pageData"></param>
+        /// <param name="orderField"></param>
+        /// <returns></returns>
+        public ElasticModel<T> SearchOrder(PageData pageData, string orderField)
+        {
+            return _esEngine.SearchOrder<T>(_index, _indexType, pageData, orderField);
+        }
+
+        public ElasticModel<T> SearchIk(PageData pageData, params QueryContext[] queryContexts)
+        {
+            return _esEngine.SearchIk<T>(_index, _indexType, pageData, queryContexts);
+        }
+
+        //全文检索，单个字段或者多字段 或关系
+        //字段intro 包含词组key中的任意一个单词
+        /// <summary>
+        /// 搜索索引信息
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="indexName">索引名称</param>
+        /// <param name="indexType">索引类型</param>
+        /// <param name="key">搜索关键字</param>
+        /// <param name="intro">搜索属性名称（默认不填为所有）</param>
+        /// <param name="opera">分词匹配模式（默认不填为所有词匹配）</param>
+        /// <returns></returns>
+        public ElasticModel<T> Search(string key, string intro = null, Operator opera = Operator.AND, PageData pageData = null, string model = null, string modelintro = null)
+        {
+            return _esEngine.Search<T>(_index, _indexType, key, intro, opera, pageData, model, modelintro);
+        }
+
+        /// <summary>
+        /// 删除某条数据
+        /// </summary>
+        /// <param name="indexName"></param>
+        /// <param name="indexType"></param>
+        /// <param name="id"></param>
+        /// <returns></returns>
+        public DeleteResult Delete(string id)
+        {
+            return _esEngine.Delete(_index, _indexType, id);
+        }
+
+
+        #endregion
+
 
         /// <summary>
         /// 获取标题的值

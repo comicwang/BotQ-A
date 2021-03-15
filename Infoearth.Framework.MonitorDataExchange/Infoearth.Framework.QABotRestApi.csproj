@@ -151,6 +151,7 @@
     <Compile Include="App_Start\WebApiConfig.cs" />
     <Compile Include="Controllers\QAManagerController.cs" />
     <Compile Include="Controllers\QAReplyController.cs" />
+    <Compile Include="Entity\MonitorQASum.cs" />
     <Compile Include="Entity\PageResult.cs" />
     <Compile Include="Entity\MonitorQA.cs" />
     <Compile Include="Global.asax.cs">

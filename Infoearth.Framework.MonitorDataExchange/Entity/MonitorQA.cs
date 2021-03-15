@@ -20,6 +20,7 @@ namespace Infoearth.Framework.QABotRestApi
 	/// <summary>
 	/// 监测预警的QA模板
 	/// </summary>
+	[Index(IndexName = "monitor",TypeName = "QA_Bot")]
 	public class MonitorQA : ESBase
 	{
 		/// <summary>
@@ -37,16 +38,12 @@ namespace Infoearth.Framework.QABotRestApi
 		/// </summary>
 		[QA(IsAnswer = true)]
 		public string answer { get; set; }
+
 		/// <summary>
-		/// 索引名称
+		/// 内推问题
 		/// </summary>
-		[Index(Name ="monitor")]
-		public string monitor { get; set; }
-		/// <summary>
-		/// 索引类型
-		/// </summary>
-		[IndexType]
-		public string QA_Bot { get; set; }
+		public bool innerSuggestion { get; set; }
+
 		/// <summary>
 		/// 创建时间
 		/// </summary>

@@ -35,7 +35,7 @@ namespace TestAdd
         {
             if (_monitor != null)
             {
-                IndexResult indexResult = _context.ESEngine.Index(_monitor._id, _monitor);
+                IndexResult indexResult = _context.Insert(_monitor);
             }
             DialogResult = DialogResult.OK;
         }

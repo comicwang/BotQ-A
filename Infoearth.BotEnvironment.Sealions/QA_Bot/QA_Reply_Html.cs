@@ -26,7 +26,7 @@ namespace Infoearth.BotEnvironment.Sealions
         public string AnsweQuestionByIk(PageData pageData, string key, string model)
         {
             string answerWord = string.Empty;
-            var result = ESEngine.SearchIk<T>(pageData,
+            var result = this.SearchIk(pageData,
                 string.IsNullOrEmpty(key) ? null :
                 new QueryContext()
                 {
@@ -51,7 +51,7 @@ namespace Infoearth.BotEnvironment.Sealions
             bool suceess = DealQuestion(result, out answerWord);
             if (suceess == false)
             {
-                result = ESEngine.SearchIk<T>(pageData,
+                result = this.SearchIk(pageData,
                 string.IsNullOrEmpty(key) ? null :
                 new QueryContext()
                 {
@@ -76,7 +76,7 @@ namespace Infoearth.BotEnvironment.Sealions
                 suceess = DealQuestion(result, out answerWord);
                 if (suceess == false)
                 {
-                    result = ESEngine.SearchIk<T>(pageData,
+                    result = this.SearchIk(pageData,
                   string.IsNullOrEmpty(key) ? null :
                   new QueryContext()
                   {
@@ -119,17 +119,17 @@ namespace Infoearth.BotEnvironment.Sealions
         {
             string answerWord = string.Empty;
             //1.对标题进行全词匹配
-            var result = ESEngine.Search<T>(key, Key, PlainElastic.Net.Operator.AND, pageData, model, AnswerModel);
+            var result = this.Search(key, Key, PlainElastic.Net.Operator.AND, pageData, model, AnswerModel);
             bool suceess = DealQuestion(result, out answerWord);
             if (suceess == false)
             {
                 //2.对标题进行单词匹配
-                result = ESEngine.Search<T>(key, Key, PlainElastic.Net.Operator.OR, pageData, model, AnswerModel);
+                result = this.Search(key, Key, PlainElastic.Net.Operator.OR, pageData, model, AnswerModel);
                 suceess = DealQuestion(result, out answerWord);
                 if (suceess == false)
                 {
                     //3.对所有属性进行全词匹配
-                    result = ESEngine.Search<T>(key,null, PlainElastic.Net.Operator.AND, pageData, model, AnswerModel);
+                    result = this.Search(key,null, PlainElastic.Net.Operator.AND, pageData, model, AnswerModel);
                     suceess = DealQuestion(result, out answerWord);
                     if (suceess == false)
                     {
@@ -164,7 +164,7 @@ namespace Infoearth.BotEnvironment.Sealions
 
         public string GetFirstWord()
         {
-            var suggestQuestion = ESEngine.Search<T>(string.Empty, Key, PlainElastic.Net.Operator.OR, new PageData() { PageSize = 3 });
+            var suggestQuestion = this.Search(string.Empty, Key, PlainElastic.Net.Operator.OR, new PageData() { PageSize = 3 });
 
             return Newtonsoft.Json.JsonConvert.SerializeObject(suggestQuestion.list);
         }
@@ -172,7 +172,7 @@ namespace Infoearth.BotEnvironment.Sealions
         public string GetDetail(string key)
         {
             string answerWord = string.Empty;
-            var result = ESEngine.Search<T>(key, Key);
+            var result = this.Search(key, Key);
             DealQuestion(result, out answerWord);
             return answerWord;
         }

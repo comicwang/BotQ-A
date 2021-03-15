@@ -24,9 +24,5 @@ namespace WebTest
 		public string model { get; set; }
 		[QA(IsAnswer = true)]
 		public string answer { get; set; }
-		[Index(Name ="monitor")]
-		public string monitor { get; set; }
-		[IndexType]
-		public string QA_Bot { get; set; }
 	}
 }

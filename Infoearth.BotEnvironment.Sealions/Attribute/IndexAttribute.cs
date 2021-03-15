@@ -10,26 +10,23 @@ namespace Infoearth.BotEnvironment.Sealions
     /// 指定实体的ES属性,这里是约定
     /// 其中Name表示ES的索引名称
     /// </summary>
-    [AttributeUsage(AttributeTargets.Property, Inherited = true)]
+    [AttributeUsage(AttributeTargets.Class, Inherited = true)]
     public class IndexAttribute : Attribute
     {
         /// <summary>
         /// ES的索引列标识
         /// </summary>
-        public string Name { get; set; }
-    }
+        public string IndexName { get; set; }
 
-    /// <summary>
-    /// 指定实体的ES属性,这里是约定
-    /// 其中Name表示ES的索引类型名称
-    /// </summary>
-    [AttributeUsage(AttributeTargets.Property, Inherited = true)]
-    public class IndexTypeAttribute : Attribute
-    {
         /// <summary>
         /// ES的索引类型列标识
         /// </summary>
-        public string Name { get; set; }
+        public string TypeName { get; set; }
+
+        /// <summary>
+        /// 表示ES的父节点名称
+        /// </summary>
+        public string ParentName { get; set; }
     }
 
     /// <summary>

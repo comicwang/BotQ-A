@@ -43,7 +43,7 @@ namespace TestAdd
             else if(e.ColumnIndex==2)
             {
                string _id = dataGridView1[0, e.RowIndex].Value?.ToString();
-                _context.ESEngine.Delete(_id);
+                _context.Delete(_id);
                 MessageBox.Show("删除成功!");
                 Search(string.Empty);
             }
@@ -51,7 +51,7 @@ namespace TestAdd
 
         private void Search(string keyword)
         {
-            ElasticModel<monitorQA> result = _context.ESEngine.Search<monitorQA>(keyword);
+            ElasticModel<monitorQA> result = _context.Search(keyword);
 
             dataGridView1.Rows.Clear();
             if (result != null && result.list != null && result.list.Count > 0)

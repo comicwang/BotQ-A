@@ -13,6 +13,7 @@ namespace Infoearth.Framework.QABotRestApi.Controllers
     public class QAManagerController : ApiControllerBase
     {
         QA_Reply_Html<MonitorQA> _qaBot = new QA_Reply_Html<MonitorQA>();
+        QA_Reply_Html<MonitorQASum> _qaSum = new QA_Reply_Html<MonitorQASum>();
 
         /// <summary>
         /// 保存问题库
@@ -24,7 +25,7 @@ namespace Infoearth.Framework.QABotRestApi.Controllers
         {
             if (string.IsNullOrEmpty(monitorQA._id) == false)
                 monitorQA.modifyTime = DateTime.Now;
-            IndexResult indexResult = _qaBot.ESEngine.Index(monitorQA._id, monitorQA);
+            IndexResult indexResult = _qaBot.Insert(monitorQA);
             
             return Success("保存成功");
         }
@@ -37,7 +38,7 @@ namespace Infoearth.Framework.QABotRestApi.Controllers
         [HttpPost]
         public WebApiResult Delete(string id)
         {
-           DeleteResult deleteResult=  _qaBot.ESEngine.Delete(id);
+           DeleteResult deleteResult=  _qaBot.Delete(id);
             return Success("删除成功");
         }
 
@@ -49,7 +50,37 @@ namespace Infoearth.Framework.QABotRestApi.Controllers
         [HttpGet]
         public MonitorQA GetById(string id)
         {
-           return  _qaBot.ESEngine.SearchById<MonitorQA>(id);
+           return  _qaBot.SearchById(id);
+        }
+
+        /// <summary>
+        /// 保存问题推荐
+        /// </summary>
+        /// <param name="id"></param>
+        /// <param name="bo"></param>
+        /// <returns></returns>
+        [HttpGet]
+        [AllowAnonymous]
+        public WebApiResult SaveQAReply(string id, bool bo)
+        {
+            MonitorQASum monitorQASum = _qaSum.SearchById(id);
+            if (monitorQASum == null)
+            {
+                monitorQASum = new MonitorQASum();
+                monitorQASum.no_count = 0;
+                monitorQASum.sure_count = 0;
+                monitorQASum._id = id;
+            }
+            if (bo)
+            {
+                monitorQASum.sure_count += 1;
+            }
+            else
+            {
+                monitorQASum.no_count += 1;
+            }
+            IndexResult indexResult = _qaSum.Insert(monitorQASum);
+            return Success("保存成功");
         }
     }
 }

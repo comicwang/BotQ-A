@@ -25,16 +25,6 @@ namespace Infoearth.BotEnvironment.Sealions
             Client = new ElasticConnection(urls[0], urls.Length > 1 ? int.Parse(urls[1]) : 9200);
         }
 
-        private static string indexName = string.Empty;
-
-        private static string indexType = string.Empty;
-
-        public void SetESParam(string index,string indextype)
-        {
-            indexName = index;
-            indexType = indextype;
-        }
-
         /// <summary>
         /// 获取分词信息
         /// </summary>
@@ -50,18 +40,6 @@ namespace Infoearth.BotEnvironment.Sealions
         }
 
         /// <summary>
-        /// 插入或者更新数据
-        /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <param name="id">索引文档id，不能重复,如果重复则覆盖原先的</param>
-        /// <param name="jsonDocument">要索引的文档,json格式</param>
-        /// <returns></returns>
-        public IndexResult Index<T>(string id,T jsonDocument) where T:ESBase
-        {
-            return Index<T>(indexName, indexType, id, jsonDocument);
-        }
-
-        /// <summary>
         /// 数据索引
         /// </summary>       
         /// <param name="indexName">索引名称</param>
@@ -69,28 +47,19 @@ namespace Infoearth.BotEnvironment.Sealions
         /// <param name="id">索引文档id，不能重复,如果重复则覆盖原先的</param>
         /// <param name="jsonDocument">要索引的文档,json格式</param>
         /// <returns></returns>
-        private IndexResult Index<T>(string indexName, string indexType, string id, T jsonDocument) where T : ESBase
+        public IndexResult Index<T>(string indexName, string indexType,T jsonDocument,string parent=null) where T : ESBase
         {
 
             var serializer = new JsonNetSerializer();
-            string cmd = new IndexCommand(indexName, indexType, id).Refresh();
-
+            IndexCommand cmd = new IndexCommand(indexName, indexType, jsonDocument._id).Refresh();
+            if (parent != null)
+                cmd = cmd.Parent(parent);
             List<string> lstIgnoreColumns = new List<string>();
             PropertyInfo[] propertys = typeof(T).GetProperties();
             for (int j = 0; j < propertys.Length; j++)
             {
                 var exportAttr = propertys[j].GetCustomAttributes<IgnoreAttribute>();
                 if (exportAttr.Any())
-                {
-                    lstIgnoreColumns.Add(propertys[j].Name);
-                }
-                var indexAttr = propertys[j].GetCustomAttributes<IndexAttribute>();
-                if (indexAttr.Any())
-                {
-                    lstIgnoreColumns.Add(propertys[j].Name);
-                }
-                var indexTypeAttr = propertys[j].GetCustomAttributes<IndexTypeAttribute>();
-                if (indexTypeAttr.Any())
                 {
                     lstIgnoreColumns.Add(propertys[j].Name);
                 }
@@ -107,7 +76,7 @@ namespace Infoearth.BotEnvironment.Sealions
             return indexResult;
         }
 
-        public ElasticModel<T> SearchIk<T>(PageData pageData,params QueryContext[] queryContexts) where T : ESBase
+        public ElasticModel<T> SearchIk<T>(string indexName, string indexType,PageData pageData,params QueryContext[] queryContexts) where T : ESBase
         {
             //解析分词         
             BoolQuery<T> query = new BoolQuery<T>();
@@ -190,30 +159,13 @@ namespace Infoearth.BotEnvironment.Sealions
 
         }
 
-
-        //全文检索，单个字段或者多字段 或关系
-        //字段intro 包含词组key中的任意一个单词
-        /// <summary>
-        /// 搜索索引信息
-        /// </summary>
-        /// <param name="key">搜索关键字</param>
-        /// <param name="intro">搜索属性名称（默认不填为所有）</param>
-        /// <param name="opera">分词匹配模式（默认不填为所有词匹配）</param>
-        /// <param name="model">所属模块关键字</param>
-        /// <param name="modelintro">所属模块属性</param>
-        /// <returns></returns>
-        public ElasticModel<T> Search<T>(string key, string intro = null, Operator opera = Operator.AND, PageData pageData = null, string model = null, string modelintro = null) where T : ESBase
-        {
-            return Search<T>(indexName, indexType, key, intro, opera, pageData, model, modelintro);
-        }
-
         /// <summary>
         /// 根据ID查询
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="id"></param>
         /// <returns></returns>
-        public T SearchById<T>(string id) where T:ESBase
+        public T SearchById<T>(string indexName, string indexType,string id) where T:ESBase
         {
             string cmd = new SearchCommand(indexName, indexType);
 
@@ -242,6 +194,85 @@ namespace Infoearth.BotEnvironment.Sealions
 
         }
 
+        /// <summary>
+        /// 根据ID查询
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="ids"></param>
+        /// <returns></returns>
+        public T[] SearchByIds<T>(string indexName, string indexType,List<string> ids) where T : ESBase
+        {
+            string cmd = new SearchCommand(indexName, indexType);
+
+            QueryString<T> queryString = new QueryString<T>();
+            QueryBuilder<T> querybuild = new QueryBuilder<T>()
+           //1 查询
+           .Query(b => b.Ids(m => m.Values(ids)));
+
+            string result = Client.Post(cmd, querybuild.Build());
+            var serializer = new JsonNetSerializer();
+            var list = serializer.ToSearchResult<T>(result);
+            ElasticModel<T> datalist = new ElasticModel<T>();
+            datalist.hits = list.hits.total;
+            datalist.took = list.took;
+            var personList = list.hits.hits.Select(c => c._source).ToArray();
+            //获取高亮值
+            for (int i = 0; i < personList.Length; i++)
+            {
+                if (list.hits.hits[i].highlight != null)
+                    personList[i].highlight = string.Join("", list.hits.hits[i].highlight.Select(t => t.Value.FirstOrDefault()));
+                personList[i]._id = list.hits.hits[i]._id;
+                personList[i]._score = list.hits.hits[i]._score;
+            }
+
+            return personList;
+
+        }
+
+        public ElasticModel<T> SearchOrder<T>(string indexName, string indexType,PageData pageData,string orderField) where T:ESBase
+        {
+            string cmd = new SearchCommand(indexName, indexType);
+
+            QueryBuilder<T> querybuild = new QueryBuilder<T>();
+            querybuild.Query(t => t.Bool(m => m.Must(q => new Query<T>())));
+            if (!string.IsNullOrEmpty(orderField))
+            {
+                querybuild.Sort(t => t.Field(orderField, SortDirection.desc));
+            }
+            if (pageData != null)
+                querybuild = querybuild.From((pageData.PageIndex - 1) * pageData.PageSize).Size(pageData.PageSize);
+            //添加高亮
+            string query = querybuild.Highlight(h => h
+                    .PreTags("<b>")
+                    .PostTags("</b>")
+                    .Fields(
+                           f => f.FieldName(orderField).Order(HighlightOrder.score),
+                           f => f.FieldName("_all")
+                           )
+                 )
+                .Build();
+
+            string result = Client.Post(cmd, query);
+            var serializer = new JsonNetSerializer();
+            var list = serializer.ToSearchResult<T>(result);
+            ElasticModel<T> datalist = new ElasticModel<T>();
+            datalist.hits = list.hits.total;
+            if (pageData != null)
+                pageData.Total = list.hits.total;
+            datalist.took = list.took;
+            var personList = list.hits.hits.Select(c => c._source).ToArray();
+            //获取高亮值
+            for (int i = 0; i < personList.Length; i++)
+            {
+                if (list.hits.hits[i].highlight != null)
+                    personList[i].highlight = string.Join("", list.hits.hits[i].highlight.Select(t => t.Value.FirstOrDefault()));
+                personList[i]._id = list.hits.hits[i]._id;
+                personList[i]._score = list.hits.hits[i]._score;
+            }
+            datalist.list.AddRange(personList);
+            return datalist;
+        }
+
         //全文检索，单个字段或者多字段 或关系
         //字段intro 包含词组key中的任意一个单词
         /// <summary>
@@ -254,7 +285,7 @@ namespace Infoearth.BotEnvironment.Sealions
         /// <param name="intro">搜索属性名称（默认不填为所有）</param>
         /// <param name="opera">分词匹配模式（默认不填为所有词匹配）</param>
         /// <returns></returns>
-        private ElasticModel<T> Search<T>(string indexName, string indexType, string key, string intro = null, Operator opera = Operator.AND, PageData pageData = null, string model = null,string modelintro=null) where T : ESBase
+        public ElasticModel<T> Search<T>(string indexName, string indexType, string key, string intro = null, Operator opera = Operator.AND, PageData pageData = null, string model = null,string modelintro=null) where T : ESBase
         {
             string cmd = new SearchCommand(indexName, indexType);
 
@@ -283,7 +314,7 @@ namespace Infoearth.BotEnvironment.Sealions
                             //并且关系
                             m.Must(t =>
                               //分词的最小单位或关系查询
-                              t.QueryString(t1 =>queryString)
+                              t.QueryString(t1 => queryString)
                                  //.QueryString(t1 => t1.DefaultField("name").Query(key))
                                  // t .Terms(t2=>t2.Field("intro").Values("研究","方鸿渐"))
                                  //范围查询
@@ -291,6 +322,7 @@ namespace Infoearth.BotEnvironment.Sealions
                                  )
                               )
                             );
+
             if (pageData != null)
                 querybuild = querybuild.From((pageData.PageIndex-1)*pageData.PageSize).Size(pageData.PageSize);
             //添加高亮
@@ -328,21 +360,11 @@ namespace Infoearth.BotEnvironment.Sealions
         /// <summary>
         /// 删除某条数据
         /// </summary>
-        /// <param name="id"></param>
-        /// <returns></returns>
-        public DeleteResult Delete(string id)
-        {
-            return Delete(indexName, indexType, id);
-        }
-
-        /// <summary>
-        /// 删除某条数据
-        /// </summary>
         /// <param name="indexName"></param>
         /// <param name="indexType"></param>
         /// <param name="id"></param>
         /// <returns></returns>
-        private DeleteResult Delete(string indexName, string indexType, string id)
+        public DeleteResult Delete(string indexName, string indexType, string id)
         {
             var serializer = new JsonNetSerializer();
             string cmd = new DeleteCommand(indexName, indexType, id).Refresh();

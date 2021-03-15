@@ -69,6 +69,8 @@ namespace Infoearth.BotEnvironment.Sealions
         public string _id { get; set; }
         [Ignore]
         public double _score { get; set; }
+        [Ignore]
+        public string _pid { get; set; }
     }
 
     public class QueryModel
