@@ -16,6 +16,7 @@ namespace TestAdd
 	 * 修改时间:
 	 * 版本： @version 1.0
 	 =====================================================*/
+	[Index(IndexName = "monitor", TypeName = "QA_Bot")]
 	public class monitorQA : ESBase
 	{
 		[QA(IsKey = true)]

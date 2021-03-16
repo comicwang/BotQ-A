@@ -54,7 +54,7 @@ namespace Infoearth.BotEnvironment.Sealions
         /// <summary>
         /// 页码
         /// </summary>
-        public int PageIndex { get; set; } = 0;
+        public int PageIndex { get; set; } = 1;
         /// <summary>
         /// 总数
         /// </summary>
