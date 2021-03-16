@@ -15,6 +15,33 @@ namespace Infoearth.Framework.QABotRestApi.Controllers
         QA_Reply_Html<MonitorQA> _qaBot = new QA_Reply_Html<MonitorQA>();
         QA_Reply_Html<MonitorQASum> _qaSum = new QA_Reply_Html<MonitorQASum>();
 
+
+        /// <summary>
+        /// 分页获取问题库内容
+        /// </summary>
+        /// <param name="pageData"></param>
+        /// <param name="keyword"></param>
+        /// <param name="model"></param>
+        /// <returns></returns>
+        [HttpGet]
+        [AllowAnonymous]
+        public PageResult<MonitorQA> PageGetQuestions([FromUri] PageData pageData, string keyword, string model = null)
+        {
+            var result = _qaBot.AnswerQuestion(pageData, keyword, model);
+            List<MonitorQA> temp = _qaBot.TargetResults;
+            ////foreach (var item in temp)
+            ////{
+            ////    if (item.answer.Length > 100)
+            ////        item.answer = item.answer.Substring(0, 100);
+            ////}
+            //删除图片内容           
+            return new PageResult<MonitorQA>()
+            {
+                pageModel = pageData,
+                data = temp
+            };
+        }
+
         /// <summary>
         /// 保存问题库
         /// </summary>

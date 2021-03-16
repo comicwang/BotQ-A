@@ -13,7 +13,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebTest", "WebTest\WebTest.
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Demo", "Demo", "{339E2250-2A5C-4DE8-9AA3-E78AF0C9E747}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Infoearth.Framework.QABotRestApi", "Infoearth.Framework.MonitorDataExchange\Infoearth.Framework.QABotRestApi.csproj", "{E28F41BC-59D2-464F-BB98-081BCEEE1A01}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Infoearth.Framework.QABotRestApi", "Infoearth.Framework.QABotRestApi\Infoearth.Framework.QABotRestApi.csproj", "{E28F41BC-59D2-464F-BB98-081BCEEE1A01}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

@@ -28,11 +28,11 @@ namespace Infoearth.Framework.QABotRestApi.Controllers
         {
             var result = _qaBot.AnswerQuestion(pageData, keyword, model);
             List<MonitorQA> temp = _qaBot.TargetResults;
-            foreach (var item in temp)
-            {
-                if (item.answer.Length > 100)
-                    item.answer = item.answer.Substring(0, 100);
-            }
+            //foreach (var item in temp)
+            //{
+            //    if (item.answer.Length > 100)
+            //        item.answer = item.answer.Substring(0, 100);
+            //}
             //删除图片内容           
             return new PageResult<MonitorQA>()
             {
@@ -75,11 +75,11 @@ namespace Infoearth.Framework.QABotRestApi.Controllers
         {
             string result = _qaBot.AnswerQuestion(null, keyword, model);
             List<MonitorQA> temp = _qaBot.TargetResults;
-            foreach (var item in temp)
-            {
-                if (item.answer.Length > 100)
-                    item.answer = item.answer.Substring(0, 100);
-            }
+            //foreach (var item in temp)
+            //{
+            //    if (item.answer.Length > 100)
+            //        item.answer = item.answer.Substring(0, 100);
+            //}
             return temp;
         }
 
